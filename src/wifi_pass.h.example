@@ -1,0 +1,3 @@
+const char* ssid = "ssid"; // Tu wpisać nazwę sieci Wi-Fi
+const char* password = "password"; // Tu wpisać hasło
+// Usunąć rozszerzenie example

@@ -178,10 +178,6 @@ void setup() {
 
   initESP_NOW();
 
-  server.on("/reading.txt", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(LittleFS, "/sensordata/40-91-51-fc-df-40/2023/11/05.txt");
-  });
-
   server.on("/managed-sensors", HTTP_GET, [](AsyncWebServerRequest *request){
     std::string responseData;
     if(request->hasParam("device"))

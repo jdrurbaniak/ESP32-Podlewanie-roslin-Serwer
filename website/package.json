@@ -1,0 +1,23 @@
+{
+  "name": "vite-starter",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "nodemon main.js -w data/www",
+    "start": "NODE_ENV=production node main.js",
+    "build": "vite build"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.22",
+    "vite": "^4.5.0"
+  },
+  "dependencies": {
+    "@popperjs/core": "^2.11.8",
+    "air-datepicker": "^3.4.0",
+    "chart.js": "^4.4.0",
+    "chartjs-adapter-luxon": "^1.3.1",
+    "express": "^4.18.2",
+    "luxon": "^3.4.4",
+    "vite-express": "*"
+  }
+}

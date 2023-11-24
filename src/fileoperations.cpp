@@ -28,3 +28,33 @@ void deleteFile(fs::FS &fs, const char * path){
         Serial.println("- delete failed");
     }
 }
+
+void copyFile(fs::FS &fs, const char * inputPath, const char * outputPath)
+{
+    File file2 = fs.open(outputPath, FILE_WRITE);
+    if (file2.available())
+    {
+        fs.remove(outputPath);
+    }
+    file2.close();
+
+    File file1 = fs.open(inputPath, FILE_READ);
+    if (!file1)
+    {
+        Serial.print("Blad kopiowania, nie mozna otworzyc ");
+        Serial.println(inputPath);
+    }
+    file2 = fs.open(outputPath, FILE_WRITE);
+    if (!file2)
+    {
+        Serial.print("Blad kopiowania, nie mozna otworzyc ");
+        Serial.println(outputPath);
+    }
+    
+    while( file1.available() ) {
+        file2.write(file1.read());
+    }
+    
+    file2.close();
+    file1.close();
+}

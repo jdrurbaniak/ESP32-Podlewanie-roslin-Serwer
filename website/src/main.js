@@ -20,7 +20,7 @@ let datePicker = new AirDatepicker('#date-select', {
       if(datePicker.selectedDates != [])
       {
         showLoadingScreen();
-        loadSensorData(sensorSelectElement.value, datePicker.selectedDates);
+        loadSensorData(devicesArray[sensorSelectElement.selectedIndex], datePicker.selectedDates);
       }
     }   
   },
@@ -103,6 +103,7 @@ function showLoadingScreen()
 {
   document.getElementById('connection-loading').classList.remove('visually-hidden');
   document.getElementById('chart-container').classList.add('visually-hidden');
+  document.getElementById('settings-button').disabled = true;
 }
 
 function hideLoadingScreen()
@@ -170,10 +171,39 @@ function hideLoadingScreen()
     return responseArray;
   }
   
+  const sensorSelectElement = document.getElementById("sensor-select");;
   const dateSelectElement = document.getElementById("date-select");
-
-
   var datesArray = [];
+  var devicesArray = [];
+
+  async function loadSettingsData(deviceAddress) {
+    document.getElementById("macAddressInput").value = deviceAddress;
+    let URI = "/get-device-settings?device=" + deviceAddress;
+    document.getElementById('settings-button').disabled = false;
+    const response = await fetch(URI);
+    const jsonResponse = await response.json();
+    console.log(jsonResponse);
+    if(jsonResponse["deviceName"] != "unnamed-device")
+    {
+      sensorSelectElement.children[sensorSelectElement.selectedIndex].innerText = jsonResponse["deviceName"]
+      document.getElementById('deviceNameInput').value = jsonResponse["deviceName"];
+    }
+    else
+    {
+      document.getElementById('deviceNameInput').value = jsonResponse["deviceName"] = "";
+    }
+    document.getElementById('minimumMoistureLevelInput').value = jsonResponse["minimumMoistureLevel"];
+    document.getElementById('maximumMoistureLevelInput').value = jsonResponse["maximumMoistureLevel"];
+    // for(let i = 0; i < sensorSelectElement.length; i++)
+    // {
+    //   console.log(sensorSelectElement.children[i].value);
+    //   console.log(sensorSelectElement.value);
+    //   if(sensorSelectElement.children[i].value == sensorSelectElement.value)
+    //   {
+    //     sensorSelectElement.children[i].innerHTML = 
+    //   }
+    // }
+  }
 
   async function loadSensorData(deviceAddress, selectedDates) {
     data.length = 0; // Czyszczenie tablicy z danymi
@@ -188,7 +218,7 @@ function hideLoadingScreen()
       datesToFetch = datesArray.slice(datesArray.indexOf(formattedStartDate), datesArray.indexOf(formattedEndDate)+1);
     }
     datesToFetch.forEach((date) => {
-      let requestURI = "managed-sensors?device=" + deviceAddress + "&date=" + date;
+      let requestURI = "managed-sensors/" + deviceAddress + "&date=" + date;
       promiseArray.push(fetchArray(requestURI))
     })
     Promise.all(promiseArray).then((response) => {
@@ -214,12 +244,13 @@ function hideLoadingScreen()
       })
       chart.update();
       hideLoadingScreen();
+      loadSettingsData(deviceAddress);
     })
   }
 
   async function loadDates(deviceAddress) {
     console.log("Ładowanie dat...");
-    let requestURI = "managed-sensors?device=" + deviceAddress;
+    let requestURI = "managed-sensors/" + deviceAddress;
     datesArray = await fetchArray(requestURI);
     datesArray.forEach((el, index) => {
       datesArray[index] = removeExtension(el);
@@ -242,11 +273,9 @@ function hideLoadingScreen()
     //loadSensorData(deviceAddress, selectedDate);
   }
 
-  const sensorSelectElement = document.getElementById("sensor-select");;
-
   async function loadDevices() {
     console.log("Ładowanie listy sensorów...");
-    let devicesArray = await fetchArray("managed-sensors");
+    devicesArray = await fetchArray("managed-sensors");
     console.log(devicesArray);
     sensorSelectElement.classList.remove("placeholder");
     sensorSelectElement.disabled = false;
@@ -263,7 +292,7 @@ function hideLoadingScreen()
     dateSelectElement.disabled = true;
     dateSelectElement.innerHTML = "";
     showLoadingScreen();
-    loadDates(sensorSelectElement.value);
+    loadDates(devicesArray[sensorSelectElement.selectedIndex]);
   });
 
   // dateSelectElement.addEventListener("select", () => {

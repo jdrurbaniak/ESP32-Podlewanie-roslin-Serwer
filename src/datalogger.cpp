@@ -19,7 +19,6 @@ void saveReading(fs::FS &fs, const uint8_t *mac_addr, struct_message &incomingRe
     createDir(fs, "/sensordata");
 
     helperStream << std::hex << (int)mac_addr[0] << "-" << (int)mac_addr[1] << "-" << (int)mac_addr[2] << "-" << (int)mac_addr[3] << "-" << (int)mac_addr[4] << "-" << (int)mac_addr[5];
-    //helperStream << "test-mac-address";
     currentPath += helperStream.str();
     createDir(fs, currentPath.c_str());
     currentPath += "/data";

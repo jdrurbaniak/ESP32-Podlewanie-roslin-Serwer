@@ -35,6 +35,23 @@ app.get('/managed-sensors', (req, res) => {
   }
 })
 
+app.use(express.json());
+
+app.post('/update-device-settings', (req, res) => {
+  console.log(req.body);
+  res.sendStatus(200);
+});
+
+app.get('/get-device-settings', (req, res) => {
+  let device = req.query.device;
+  console.log(`device: ${device}`);
+  if(device != undefined) {
+      let fileName = path.join(__dirname, `../data/defaults/sensorConfig.json`)
+      res.sendFile(fileName)
+  }
+})
+
+
 ViteExpress.listen(app, port, () =>
   console.log(`Server is listening on port ${port}...`)
 );

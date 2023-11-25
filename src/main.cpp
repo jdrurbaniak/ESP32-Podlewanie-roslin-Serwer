@@ -216,7 +216,7 @@ void setup() {
   });
 
   server.on("/sensor-settings", HTTP_GET, [](AsyncWebServerRequest *request){
-    if(request->hasParam("device"))
+    if(request->hasParam("device") && request->getParam("device")->value().length() != 0)
     {
       std::stringstream responsePath;
       auto paramDevice = request->getParam("device");
@@ -235,7 +235,7 @@ void setup() {
 
       }
       request->send(LittleFS, responsePath.str().c_str());
-    } else request->send(200);
+    } else request->send(404);
   });
 
   AsyncCallbackJsonWebHandler* updateDeviceSettingsHandler = new AsyncCallbackJsonWebHandler("/sensor-settings", [](AsyncWebServerRequest *request, JsonVariant &json) {

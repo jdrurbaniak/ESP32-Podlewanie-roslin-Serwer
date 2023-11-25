@@ -186,10 +186,11 @@ void setup() {
   Serial.println(WiFi.channel());
 
   initESP_NOW();
+  server.addRewrite( new OneParamRewrite("/sensor-data/{dev}", "/sensor-data?device={dev}") );
+  server.addRewrite( new OneParamRewrite("/sensor-settings/{dev}", "/sensor-settings?device={dev}") );
 
-  server.addRewrite( new OneParamRewrite("/managed-sensors/{dev}", "/managed-sensors?device={dev}") );
 
-  server.on("/managed-sensors", HTTP_GET, [](AsyncWebServerRequest *request){
+  server.on("/sensor-data", HTTP_GET, [](AsyncWebServerRequest *request){
     std::string responseData;
     if(request->hasParam("device"))
     {
@@ -214,10 +215,7 @@ void setup() {
     if(!request->hasParam("date")) request->send(200, "text/plain", responseData.c_str());
   });
 
-  server.on("/get-device-settings", HTTP_GET, [](AsyncWebServerRequest *request){
-    std::string testString = listFiles(LittleFS, "/sensordata/40-91-51-fc-c0-d8");
-    Serial.println(testString.c_str());
-    Serial.println("/get-device-settings");
+  server.on("/sensor-settings", HTTP_GET, [](AsyncWebServerRequest *request){
     if(request->hasParam("device"))
     {
       std::stringstream responsePath;
@@ -237,45 +235,32 @@ void setup() {
 
       }
       request->send(LittleFS, responsePath.str().c_str());
-    }
+    } else request->send(200);
   });
 
-  // server.on("/update-device-settings", HTTP_POST, [](AsyncWebServerRequest *request)
-  // {
-  //   Serial.print("/update-device-settings request: ");
-  //   Serial.println(request->getParam("deviceName")->value().c_str());
-  //   int params = request->params();
-  //   for(int i=0;i<params;i++){
-  //     AsyncWebParameter* p = request->getParam(i);
-  //     if(p->isFile()){ //p->isPost() is also true
-  //       Serial.printf("FILE[%s]: %s, size: %u\n", p->name().c_str(), p->value().c_str(), p->size());
-  //     } else if(p->isPost()){
-  //       Serial.printf("POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
-  //     } else {
-  //       Serial.printf("GET[%s]: %s\n", p->name().c_str(), p->value().c_str());
-  //     }
-  //   }
-  // });
-
-  AsyncCallbackJsonWebHandler* updateDeviceSettingsHandler = new AsyncCallbackJsonWebHandler("/update-device-settings", [](AsyncWebServerRequest *request, JsonVariant &json) {
-    StaticJsonDocument<512> configData;
-    if (json.is<JsonObject>())
+  AsyncCallbackJsonWebHandler* updateDeviceSettingsHandler = new AsyncCallbackJsonWebHandler("/sensor-settings", [](AsyncWebServerRequest *request, JsonVariant &json) {
+    if(request->method() == HTTP_PUT)
     {
-      configData = json.as<JsonObject>();
-    }
-    std::string macAddressString = configData["macAddress"];
-    std::string configPath = "/sensordata/" + macAddressString + "/sensorConfig.json"; 
-    // bool isFileAvailable = configFile.available();
-    bool isFileAvailable = LittleFS.exists(configPath.c_str());
-    Serial.println(isFileAvailable);
-    // configFile.close();
-    if (isFileAvailable == true)
-    {
-        LittleFS.remove(configPath.c_str());
-    }
-    File configFile2 = LittleFS.open(configPath.c_str(), FILE_WRITE);
-    serializeJson(json, configFile2);
-    configFile2.close();
+      StaticJsonDocument<512> configData;
+      if (json.is<JsonObject>())
+      {
+        configData = json.as<JsonObject>();
+      }
+      std::string macAddressString = configData["macAddress"];
+      std::string configPath = "/sensordata/" + macAddressString + "/sensorConfig.json"; 
+      // bool isFileAvailable = configFile.available();
+      bool isFileAvailable = LittleFS.exists(configPath.c_str());
+      Serial.println(isFileAvailable);
+      // configFile.close();
+      if (isFileAvailable == true)
+      {
+          LittleFS.remove(configPath.c_str());
+      }
+      File configFile2 = LittleFS.open(configPath.c_str(), FILE_WRITE);
+      serializeJson(json, configFile2);
+      configFile2.close();
+      request->send(200);
+    } else request->send(404);
   });
   server.addHandler(updateDeviceSettingsHandler);
 

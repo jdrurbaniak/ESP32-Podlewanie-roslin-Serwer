@@ -8,14 +8,14 @@ form.addEventListener('submit', async event => {
   let formDataJsonString = JSON.stringify(formDataObject);
 
   let fetchOptions = {
-    method: "POST",
+    method: "PUT",
     headers: {
       "Content-Type": "application/json",
       Accept: "application/json",
     },
     body: formDataJsonString,
   };
-  let res = await fetch('/update-device-settings', fetchOptions);
+  let res = await fetch('/sensor-settings', fetchOptions);
 
   if (!res.ok) {
     let error = await res.text();

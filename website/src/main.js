@@ -178,7 +178,7 @@ function hideLoadingScreen()
 
   async function loadSettingsData(deviceAddress) {
     document.getElementById("macAddressInput").value = deviceAddress;
-    let URI = "/get-device-settings?device=" + deviceAddress;
+    let URI = "/sensor-settings/" + deviceAddress;
     document.getElementById('settings-button').disabled = false;
     const response = await fetch(URI);
     const jsonResponse = await response.json();
@@ -218,7 +218,7 @@ function hideLoadingScreen()
       datesToFetch = datesArray.slice(datesArray.indexOf(formattedStartDate), datesArray.indexOf(formattedEndDate)+1);
     }
     datesToFetch.forEach((date) => {
-      let requestURI = "managed-sensors/" + deviceAddress + "&date=" + date;
+      let requestURI = "sensor-data/" + deviceAddress + "&date=" + date;
       promiseArray.push(fetchArray(requestURI))
     })
     Promise.all(promiseArray).then((response) => {
@@ -250,7 +250,7 @@ function hideLoadingScreen()
 
   async function loadDates(deviceAddress) {
     console.log("Ładowanie dat...");
-    let requestURI = "managed-sensors/" + deviceAddress;
+    let requestURI = "sensor-data/" + deviceAddress;
     datesArray = await fetchArray(requestURI);
     datesArray.forEach((el, index) => {
       datesArray[index] = removeExtension(el);
@@ -275,7 +275,7 @@ function hideLoadingScreen()
 
   async function loadDevices() {
     console.log("Ładowanie listy sensorów...");
-    devicesArray = await fetchArray("managed-sensors");
+    devicesArray = await fetchArray("sensor-data");
     console.log(devicesArray);
     sensorSelectElement.classList.remove("placeholder");
     sensorSelectElement.disabled = false;

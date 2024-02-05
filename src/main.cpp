@@ -49,7 +49,6 @@ bool addPeer(const uint8_t *peer_addr) {
 
   bool exists = esp_now_is_peer_exist(slave.peer_addr);
   if (exists) {
-    // Slave already paired.
     Serial.println("Already Paired");
     return true;
   }
@@ -79,8 +78,6 @@ void onDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int lengt
   Serial.print(" bytes of data received from : ");
   printMAC(mac_addr);
   Serial.println();
-  // StaticJsonDocument<1000> root;
-  // String payload;
   uint8_t type = incomingData[0];
   switch (type) {
   case DATA : 
@@ -92,35 +89,22 @@ void onDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int lengt
     {
       esp_now_send(NULL, (uint8_t *) &dataToSend, sizeof(dataToSend));
     }
-    // root["id"] = incomingReadings.id;
-    // root["humidity"] = incomingReadings.humidity;
-    // root["readingId"] = String(incomingReadings.readingId);
-    //root["time"] = getTime();
-    // serializeJson(root, payload);
-    // Serial.print("event send :");
-    // serializeJson(root, Serial);
-    // events.send(payload.c_str(), "new_readings", millis());
-    // Serial.println();
     break;
   
   case PAIRING: 
     memcpy(&pairingData, incomingData, sizeof(pairingData));
     Serial.println(pairingData.msgType);
-    Serial.println(pairingData.id);
     Serial.print("Pairing request from: ");
     printMAC(mac_addr);
     Serial.println();
     Serial.println(pairingData.channel);
-    if (pairingData.id > 0) { 
       if (pairingData.msgType == PAIRING) { 
-        pairingData.id = 0;       // 0 is server
         WiFi.softAPmacAddress(pairingData.macAddr);   
         pairingData.channel = serverChannel;
         Serial.println("send response");
         esp_err_t result = esp_now_send(mac_addr, (uint8_t *) &pairingData, sizeof(pairingData));
         addPeer(mac_addr);
       }  
-    }  
     break; 
   }
 }
@@ -223,9 +207,7 @@ void setup() {
       responsePath << "/sensordata/" << paramDevice->value().c_str() << "/sensorConfig.json";
       Serial.println(responsePath.str().c_str());
       Serial.println(LittleFS.exists(responsePath.str().c_str()));
-      //File file = LittleFS.open(responsePath.str().c_str());
       bool isFileAvailable = LittleFS.exists(responsePath.str().c_str());
-      //file.close();
       if(!isFileAvailable)
       {
           Serial.print("Brak pliku konfiguracyjnego dla ");

@@ -1,22 +1,12 @@
 #pragma once
 #include "stdint.h"
 
-enum MessageType {PAIRING, DATA,};
-// Structure example to receive data
-// Must match the sender structure
+enum MessageType {PAIRING, DATA};
+
 typedef struct struct_message {
   uint8_t msgType;
-  uint8_t id;
   float humidity;
-  unsigned int readingId;
 } struct_message;
-
-typedef struct struct_incoming_message {
-  uint8_t msgType;
-  uint8_t id;
-  float humidity;
-  unsigned int readingId;
-} struct_incoming_message;
 
 typedef struct struct_outgoing_message {
   uint8_t msgType;
@@ -24,9 +14,8 @@ typedef struct struct_outgoing_message {
   float maximumMoistureLevel;
 } struct_outgoing_message;
 
-typedef struct struct_pairing {       // new structure for pairing
+typedef struct struct_pairing {
     uint8_t msgType;
-    uint8_t id;
     uint8_t macAddr[6];
     uint8_t channel;
 } struct_pairing;

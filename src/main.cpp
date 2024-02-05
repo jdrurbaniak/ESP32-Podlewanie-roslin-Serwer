@@ -19,7 +19,7 @@ const std::string hostname = "ESP32 Serwer systemu monitorowania roślin";
 const std::string domainName = "podlewanieroslin";
 
 esp_now_peer_info_t slave;
-int chan; 
+int serverChannel; 
 
 MessageType messageType;
 
@@ -44,7 +44,7 @@ bool addPeer(const uint8_t *peer_addr) {
   const esp_now_peer_info_t *peer = &slave;
   memcpy(slave.peer_addr, peer_addr, 6);
   
-  slave.channel = chan;
+  slave.channel = serverChannel;
   slave.encrypt = 0;
 
   bool exists = esp_now_is_peer_exist(slave.peer_addr);
@@ -67,20 +67,20 @@ bool addPeer(const uint8_t *peer_addr) {
   }
 } 
 
-void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
+void onDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
   Serial.print("Last Packet Send Status: ");
   Serial.print(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success to " : "Delivery Fail to ");
   printMAC(mac_addr);
   Serial.println();
 }
 
-void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len) { 
-  Serial.print(len);
+void onDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int length) { 
+  Serial.print(length);
   Serial.print(" bytes of data received from : ");
   printMAC(mac_addr);
   Serial.println();
-  StaticJsonDocument<1000> root;
-  String payload;
+  // StaticJsonDocument<1000> root;
+  // String payload;
   uint8_t type = incomingData[0];
   switch (type) {
   case DATA : 
@@ -92,15 +92,15 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len) 
     {
       esp_now_send(NULL, (uint8_t *) &dataToSend, sizeof(dataToSend));
     }
-    root["id"] = incomingReadings.id;
-    root["humidity"] = incomingReadings.humidity;
-    root["readingId"] = String(incomingReadings.readingId);
+    // root["id"] = incomingReadings.id;
+    // root["humidity"] = incomingReadings.humidity;
+    // root["readingId"] = String(incomingReadings.readingId);
     //root["time"] = getTime();
-    serializeJson(root, payload);
-    Serial.print("event send :");
-    serializeJson(root, Serial);
-    events.send(payload.c_str(), "new_readings", millis());
-    Serial.println();
+    // serializeJson(root, payload);
+    // Serial.print("event send :");
+    // serializeJson(root, Serial);
+    // events.send(payload.c_str(), "new_readings", millis());
+    // Serial.println();
     break;
   
   case PAIRING: 
@@ -115,7 +115,7 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len) 
       if (pairingData.msgType == PAIRING) { 
         pairingData.id = 0;       // 0 is server
         WiFi.softAPmacAddress(pairingData.macAddr);   
-        pairingData.channel = chan;
+        pairingData.channel = serverChannel;
         Serial.println("send response");
         esp_err_t result = esp_now_send(mac_addr, (uint8_t *) &pairingData, sizeof(pairingData));
         addPeer(mac_addr);
@@ -130,8 +130,8 @@ void initESP_NOW(){
       Serial.println("Error initializing ESP-NOW");
       return;
     }
-    esp_now_register_send_cb(OnDataSent);
-    esp_now_register_recv_cb(OnDataRecv);
+    esp_now_register_send_cb(onDataSent);
+    esp_now_register_recv_cb(onDataRecv);
 } 
 
 std::string listFiles(fs::FS &fs, const char * dirname, bool isDir=true){
@@ -179,7 +179,7 @@ void setup() {
   MDNS.addService("http", "tcp", 80);
   configTime(0, 0, ntpServer);
 
-  chan = WiFi.channel();
+  serverChannel = WiFi.channel();
   Serial.print("Station IP Address: ");
   Serial.println(WiFi.localIP());
   Serial.print("Wi-Fi Channel: ");
@@ -232,10 +232,9 @@ void setup() {
           Serial.print(paramDevice->value().c_str());
           Serial.println("! Kopiowanie wartosci domyslnych...");
           copyFile(LittleFS, "/defaults/sensorConfig.json", responsePath.str().c_str());
-
       }
       request->send(LittleFS, responsePath.str().c_str());
-    } else request->send(404);
+    } else request->send(400);
   });
 
   AsyncCallbackJsonWebHandler* updateDeviceSettingsHandler = new AsyncCallbackJsonWebHandler("/sensor-settings", [](AsyncWebServerRequest *request, JsonVariant &json) {
@@ -248,10 +247,8 @@ void setup() {
       }
       std::string macAddressString = configData["macAddress"];
       std::string configPath = "/sensordata/" + macAddressString + "/sensorConfig.json"; 
-      // bool isFileAvailable = configFile.available();
       bool isFileAvailable = LittleFS.exists(configPath.c_str());
       Serial.println(isFileAvailable);
-      // configFile.close();
       if (isFileAvailable == true)
       {
           LittleFS.remove(configPath.c_str());
@@ -260,7 +257,7 @@ void setup() {
       serializeJson(json, configFile2);
       configFile2.close();
       request->send(200);
-    } else request->send(404);
+    } else request->send(400);
   });
   server.addHandler(updateDeviceSettingsHandler);
 
